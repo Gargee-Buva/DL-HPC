@@ -1,242 +1,262 @@
 # ==========================================================
-# PRACTICAL 2 : IMDB Movie Review Sentiment Analysis using DNN
+# PRACTICAL 2 : Letter Recognition using Deep Neural Network
 # ==========================================================
 
 # ----------------------------------------------------------
 # STEP 1 : Import Required Libraries
 # ----------------------------------------------------------
 
-# numpy is used for numerical operations
-import numpy as np
+# pandas is used for dataframe handling
+import pandas as pd
 
-# keras provides deep learning APIs
-from tensorflow import keras
+# train_test_split is used to divide dataset
+# into training and testing data
+from sklearn.model_selection import train_test_split
 
-# Sequential is used to create neural network layer-by-layer
-from keras.models import Sequential
+# StandardScaler is used for feature scaling
+# LabelBinarizer converts categorical labels into binary vectors
+from sklearn.preprocessing import StandardScaler, LabelBinarizer
+
+# tensorflow is deep learning framework
+import tensorflow as tf
+
+# Sequential is used to create neural network
+# layer-by-layer
+from tensorflow.keras.models import Sequential
 
 # Dense creates fully connected neural network layers
-from keras.layers import Dense
+from tensorflow.keras.layers import Dense
 
-# IMDB dataset contains movie reviews
-from keras.datasets import imdb
-
-
-# ----------------------------------------------------------
-# STEP 2 : Load IMDB Dataset
-# ----------------------------------------------------------
-
-# num_words=10000 means:
-# only top 10,000 frequently occurring words are used
-
-# x_train -> movie reviews for training
-# y_train -> labels for training
-# x_test  -> movie reviews for testing
-# y_test  -> labels for testing
-
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=10000)
+# Adam optimizer improves model learning
+# by updating weights efficiently
+from tensorflow.keras.optimizers import Adam
 
 
 # ----------------------------------------------------------
-# STEP 3 : Understand Dataset
+# STEP 2 : Load Dataset
 # ----------------------------------------------------------
 
-# Each review is stored as integer sequence
+# Dataset URL from UCI repository
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/letter-recognition.data"
+
+# Create column names:
+# 1 target column -> "letter"
+# 16 feature columns -> feat_0 to feat_15
+
+col_names = ["letter"] + [f"feat_{i}" for i in range(16)]
+
+# Read dataset using pandas
+# header=None because dataset has no header row
+# names=col_names assigns custom column names
+
+data = pd.read_csv(url, header=None, names=col_names)
+
+
+# ----------------------------------------------------------
+# STEP 3 : Separate Input and Output Data
+# ----------------------------------------------------------
+
+# X contains input features
+# axis=1 means remove column vertically
+
+X = data.drop("letter", axis=1).values
+
+# y contains target labels (A-Z letters)
+
+y = data["letter"].values
+
+
+# ----------------------------------------------------------
+# STEP 4 : Label Encoding using LabelBinarizer
+# ----------------------------------------------------------
+
+# Create LabelBinarizer object
+# Used for one-hot encoding output labels
+
+encoder = LabelBinarizer()
+
+# Convert letters into binary vectors
 
 # Example:
-# [1, 14, 20, 45]
+# A -> [1 0 0 0 ...]
+# B -> [0 1 0 0 ...]
 
-# Each integer represents a word index
+Y = encoder.fit_transform(y)
 
-print("Sample Review :", x_train[0])
-
-print("Label :", y_train[0])
-
-# Label meanings:
-# 1 -> Positive Review
-# 0 -> Negative Review
+# Why needed?
+# Neural networks cannot understand text labels directly
 
 
 # ----------------------------------------------------------
-# STEP 4 : Vectorization / One-Hot Encoding
+# STEP 5 : Split Dataset into Training and Testing
 # ----------------------------------------------------------
 
-# Neural networks cannot understand raw text
+# test_size=0.2
+# 20% data used for testing
 
-# So we convert reviews into vectors of:
-# 0s and 1s
+# random_state=42
+# ensures same random split every time
 
-# 1 -> word exists
-# 0 -> word absent
-
-# We create a function for vectorization
-
-def vectorize_sequences(sequences, dimension=10000):
-
-    # Create matrix filled with zeros
-    # rows = number of reviews
-    # columns = 10000 words
-
-    results = np.zeros((len(sequences), dimension))
-
-    # enumerate() gives:
-    # i -> index
-    # sequence -> actual review
-
-    for i, sequence in enumerate(sequences):
-
-        # Mark positions of existing words as 1
-        results[i, sequence] = 1.
-
-    return results
-
-
-# Convert training reviews into vectors
-x_train = vectorize_sequences(x_train)
-
-# Convert testing reviews into vectors
-x_test = vectorize_sequences(x_test)
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X,
+    Y,
+    test_size=0.2,
+    random_state=42
+)
 
 
 # ----------------------------------------------------------
-# STEP 5 : Convert Labels into Float
+# STEP 6 : Feature Scaling
 # ----------------------------------------------------------
 
-# Convert labels into float32 format
+# Create StandardScaler object
+# Used to normalize feature values
 
-y_train = np.asarray(y_train).astype('float32')
+scaler = StandardScaler()
 
-y_test = np.asarray(y_test).astype('float32')
+# fit_transform():
+# learns mean/std deviation and scales training data
+
+X_train = scaler.fit_transform(X_train)
+
+# transform():
+# scales test data using SAME scaling parameters
+
+# Important:
+# Avoids data leakage
+
+X_test = scaler.transform(X_test)
 
 
 # ----------------------------------------------------------
-# STEP 6 : Build Deep Neural Network
+# STEP 7 : Build Deep Neural Network Model
 # ----------------------------------------------------------
 
 # Sequential model:
 # layers added one after another
 
-model = Sequential()
+model = Sequential([
+
+    # First hidden layer
+    # 128 neurons
+    # ReLU activation introduces nonlinearity
+
+    # input_shape=(16,)
+    # because dataset contains 16 features
+
+    Dense(128, activation='relu', input_shape=(16,)),
+
+
+    # Second hidden layer
+    # 64 neurons for deeper learning
+
+    Dense(64, activation='relu'),
+
+
+    # Output layer
+    # 26 neurons because:
+    # total 26 alphabet classes (A-Z)
+
+    # softmax activation:
+    # converts outputs into probabilities
+
+    Dense(26, activation='softmax')
+])
 
 
 # ----------------------------------------------------------
-# FIRST HIDDEN LAYER
+# STEP 8 : Compile Deep Learning Model
 # ----------------------------------------------------------
 
-# Dense(16):
-# 16 neurons
+model.compile(
 
-# activation='relu'
-# ReLU introduces nonlinearity
+    # Adam optimizer updates weights efficiently
+    optimizer=Adam(learning_rate=0.001),
 
-# input_shape=(10000,)
-# input vector contains 10000 features
+    # categorical_crossentropy used for
+    # multiclass classification
 
-model.add(Dense(16,
-                activation='relu',
-                input_shape=(10000,)))
+    loss="categorical_crossentropy",
 
-
-# ----------------------------------------------------------
-# SECOND HIDDEN LAYER
-# ----------------------------------------------------------
-
-# Another hidden layer helps learn deeper patterns
-
-model.add(Dense(16,
-                activation='relu'))
+    # accuracy used for performance evaluation
+    metrics=["accuracy"]
+)
 
 
 # ----------------------------------------------------------
-# OUTPUT LAYER
+# STEP 9 : Train Neural Network
 # ----------------------------------------------------------
 
-# Dense(1):
-# single output neuron because:
-# binary classification
+# fit() trains the model
 
-# sigmoid activation:
-# output probability between 0 and 1
-
-model.add(Dense(1,
-                activation='sigmoid'))
-
-
-# ----------------------------------------------------------
-# STEP 7 : Compile Model
-# ----------------------------------------------------------
-
-# optimizer='rmsprop'
-# optimizer updates weights during training
-
-# loss='binary_crossentropy'
-# used for binary classification
-
-# metrics=['accuracy']
-# accuracy displayed during training
-
-model.compile(optimizer='rmsprop',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
-
-
-# ----------------------------------------------------------
-# STEP 8 : Create Validation Dataset
-# ----------------------------------------------------------
-
-# First 10,000 reviews used for validation
-
-x_val = x_train[:10000]
-
-partial_x_train = x_train[10000:]
-
-y_val = y_train[:10000]
-
-partial_y_train = y_train[10000:]
-
-
-# ----------------------------------------------------------
-# STEP 9 : Train Deep Neural Network
-# ----------------------------------------------------------
-
-# epochs=20
+# epochs=25
 # complete passes through dataset
 
-# batch_size=512
-# 512 reviews processed together
+# batch_size=32
+# 32 samples processed together
 
-history = model.fit(partial_x_train,
-                    partial_y_train,
-                    epochs=20,
-                    batch_size=512,
-                    validation_data=(x_val, y_val))
+# validation_split=0.1
+# 10% training data used for validation
 
-
-# ----------------------------------------------------------
-# STEP 10 : Evaluate Model
-# ----------------------------------------------------------
-
-# evaluate() checks performance on test dataset
-
-results = model.evaluate(x_test, y_test)
-
-print("Test Loss :", results[0])
-
-print("Test Accuracy :", results[1])
+history = model.fit(
+    X_train,
+    Y_train,
+    epochs=25,
+    batch_size=32,
+    validation_split=0.1
+)
 
 
 # ----------------------------------------------------------
-# STEP 11 : Predict Sentiment
+# What Actually Happens During Training?
 # ----------------------------------------------------------
 
-# predict() gives probability values
+# Neural network:
 
-predictions = model.predict(x_test)
+# 1. Takes feature values as input
+# 2. Passes data through hidden layers
+# 3. Learns patterns of alphabet letters
+# 4. Predicts probabilities for A-Z classes
+# 5. Calculates prediction error
+# 6. Updates weights using Adam optimizer
+# 7. Repeats for 25 epochs to improve accuracy
 
-print(predictions[0])
 
-# If prediction close to 1:
-# Positive Review
+# ----------------------------------------------------------
+# STEP 10 : Evaluate Model Performance
+# ----------------------------------------------------------
 
-# If prediction close to 0:
-# Negative Review
+# evaluate() checks performance on unseen test data
+
+test_loss, test_acc = model.evaluate(X_test, Y_test)
+
+# Display final test accuracy
+
+print(f"Test Accuracy: {test_acc:.4f}")
+
+
+# ----------------------------------------------------------
+# Meaning of Final Output
+# ----------------------------------------------------------
+
+# test_loss:
+# prediction error on testing data
+
+# test_acc:
+# percentage of correct predictions
+
+# Higher accuracy means:
+# better alphabet classification performance
+#-----------------------------------------------------------
+
+# overview of code :-
+# Load dataset
+# Separate input features and output labels
+# Convert labels into one-hot encoded vectors
+# Split dataset into training and testing data
+# Normalize input features using StandardScaler
+# Build Deep Neural Network model
+# Compile model using optimizer and loss function
+# Train model using training data
+# Evaluate model on test data
+# Predict alphabet classes using trained model
