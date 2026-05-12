@@ -13,11 +13,12 @@ import pandas as pd
 # into training and testing data
 from sklearn.model_selection import train_test_split
 
-# StandardScaler is used for feature scaling
+# StandardScaler is used for feature scaling(Feature scaling is the process of bringing all input features into a similar range to improve neural network training speed and performance.)
+
 # LabelBinarizer converts categorical labels into binary vectors
 from sklearn.preprocessing import StandardScaler, LabelBinarizer
 
-# tensorflow is deep learning framework
+# tensorflow is deep learning framework to build, train, and evaluate neural network models.
 import tensorflow as tf
 
 # Sequential is used to create neural network
@@ -56,8 +57,12 @@ data = pd.read_csv(url, header=None, names=col_names)
 # STEP 3 : Separate Input and Output Data
 # ----------------------------------------------------------
 
-# X contains input features
-# axis=1 means remove column vertically
+#Meaning
+#drop("letter", axis=1) → removes output/target column
+#Remaining columns become input features
+#.values → converts dataframe into NumPy array
+
+#So: X stores only input feature data for training the neural network.
 
 X = data.drop("letter", axis=1).values
 
@@ -75,7 +80,7 @@ y = data["letter"].values
 
 encoder = LabelBinarizer()
 
-# Convert letters into binary vectors
+# Convert letter labels into one-hot encoded binary vectors which is stored in Y
 
 # Example:
 # A -> [1 0 0 0 ...]
@@ -91,6 +96,9 @@ Y = encoder.fit_transform(y)
 # STEP 5 : Split Dataset into Training and Testing
 # ----------------------------------------------------------
 
+#X_train, Y_train → data used for training
+#X_test, Y_test → data used for testing
+
 # test_size=0.2
 # 20% data used for testing
 
@@ -103,7 +111,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
-
+#Random split ensures that training and testing data are unbiased and representative of the overall dataset, helping the model generalize better.
 
 # ----------------------------------------------------------
 # STEP 6 : Feature Scaling
@@ -139,7 +147,7 @@ model = Sequential([
 
     # First hidden layer
     # 128 neurons
-    # ReLU activation introduces nonlinearity
+    # ReLU activation introduces nonlinearity ,learn complex relationships
 
     # input_shape=(16,)
     # because dataset contains 16 features
@@ -175,13 +183,25 @@ model.compile(
 
     # categorical_crossentropy used for
     # multiclass classification
+    
+    # Purpose: Calculates prediction error
+    # Used because: multiple output classes exist (A–Z)
+    # Smaller loss: better predictions
 
     loss="categorical_crossentropy",
 
-    # accuracy used for performance evaluation
+    # Measures model performance
     metrics=["accuracy"]
 )
 
+# What Happens Internally?
+# During training:
+
+# Model predicts output
+# Loss function calculates error
+# Optimizer updates weights
+# Accuracy calculated
+# Process repeats until model improves
 
 # ----------------------------------------------------------
 # STEP 9 : Train Neural Network
