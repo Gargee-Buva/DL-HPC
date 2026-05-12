@@ -3,6 +3,8 @@
 # using Linear Regression
 # ==========================================================
 
+# drive.mount('/content/drive') is used to connect Google Drive with Google Colab so that files and datasets stored in Drive can be accessed inside the notebook.
+
 # ----------------------------------------------------------
 # STEP 1 : Import Required Libraries
 # ----------------------------------------------------------
@@ -13,170 +15,346 @@ import numpy as np
 # pandas for dataframe handling
 import pandas as pd
 
-# matplotlib for plotting graphs
-import matplotlib.pyplot as plt
+#Keras is used to build and train deep learning models.
+from tensorflow import keras
 
-# sklearn contains machine learning algorithms
-from sklearn.datasets import load_boston
+#StandardScaler is used to normalize input features so that all values are in a similar range for efficient neural network training.
+from sklearn.preprocessing import StandardScaler
 
-# train_test_split used to divide dataset
-from sklearn.model_selection import train_test_split
+#Sequential is used to create a neural network where layers are arranged sequentially.
+from tensorflow.keras.models import Sequential
 
-# LinearRegression algorithm
-from sklearn.linear_model import LinearRegression
+# Dense means : Every neuron connects to every neuron of next layer.
+#Dense layers:
+#1. learn relationships between features and house prices
+#2. perform regression prediction
+from tensorflow.keras.layers import Dense
 
-# Mean Squared Error calculation
-from sklearn.metrics import mean_squared_error
+#RMSprop is an optimizer used to minimize loss and improve neural network learning by updating weights efficiently.
+from tensorflow.keras.optimizers import RMSprop
 
 
 # ----------------------------------------------------------
 # STEP 2 : Load Boston Housing Dataset
 # ----------------------------------------------------------
 
-# load_boston() loads housing price dataset
+## (Dataset Available directly in Keras)
 
-boston = load_boston()
+# keras.datasets.boston_housing.load_data()
+# loads the Boston Housing dataset
 
+# X_train -> input features used for training
+# Y_train -> output prices used for training
 
-# ----------------------------------------------------------
-# STEP 3 : Convert Dataset into DataFrame
-# ----------------------------------------------------------
+# X_test -> input features used for testing
+# Y_test -> actual prices used for testing
 
-# Convert dataset into tabular format
+# The dataset is automatically divided into:
+# training data and testing data
+(X_train, Y_train), (X_test, Y_test) = keras.datasets.boston_housing.load_data()
 
-data = pd.DataFrame(boston.data)
+# (number_of_training_samples, number_of_features)
 
-# Assign column names
-data.columns = boston.feature_names
-
-# Add target column named Price
-data['Price'] = boston.target
-
-
-# ----------------------------------------------------------
-# STEP 4 : Display Dataset
-# ----------------------------------------------------------
-
-print(data.head())
-
-
-# ----------------------------------------------------------
-# STEP 5 : Separate Input and Output Data
-# ----------------------------------------------------------
-
-# x contains input features
 # Example:
-# crime rate, rooms, tax etc.
+# (404, 13)
 
-x = boston.data
+# Meaning:
+# 404 house records for training
+# each house has 13 features
 
-# y contains output values
-# house prices
+print("Training data shape:", X_train.shape)
+# X_test.shape shows:
+# number of testing samples and features
+print("Test data shape:", X_test.shape)  
+print("Train output data shape:", Y_train.shape) # number of output labels/prices
 
-y = boston.target
+# ----------------------------------------------------------
+# STEP 3 : Feature Scaling using StandardScaler
+# ----------------------------------------------------------
+# Create StandardScaler object
+# Used to normalize data into similar range
+
+scaler = StandardScaler()
+
+
+# fit_transform() does two things:
+# 1. Learns mean and standard deviation from training data
+# 2. Scales training data
+
+# Why?
+# Neural networks perform better when all features
+# are in similar range
+
+X_train = scaler.fit_transform(X_train)
+
+
+# transform() scales testing data
+# using SAME mean and standard deviation
+# learned from training data
+
+# Important:
+# We never fit scaler separately on test data
+# Use same scaling parameters from training data
+# to avoid data leakage
+
+X_test = scaler.transform(X_test)
+
+# ----------------------------------------------------------
+# STEP 5 : Create histogram plot of house prices
+# ----------------------------------------------------------
+
+import seaborn as sns
+# seaborn is a data visualization library
+# used for creating attractive statistical graphs
+import matplotlib.pyplot as plt
+# matplotlib.pyplot is used for plotting graphs and visualizations
+sns.histplot(Y_train, kde=True)
+#histplot() → creates histogram graph
+#Y_train → training house prices data
+#kde=True → adds smooth distribution curve on graph
+plt.xlabel("House Price ($1000s)")
+plt.ylabel("Frequency")
+plt.title("Distribution of House Prices")
+plt.show()
+# Graph Shows how house prices are distributed in training data
+
+# ----------------------------------------------------------
+# STEP 6 : Boxplot building
+# ----------------------------------------------------------
+
+#| Histogram                    | Boxplot                 |
+#| ---------------------------- | ----------------------- |
+#| Shows frequency distribution | Shows spread & outliers |
+#| Detailed distribution        | Statistical summary     |
 
 
 # ----------------------------------------------------------
-# STEP 6 : Split Dataset into Training and Testing
+# STEP 7 : dataframes arrangement
 # ----------------------------------------------------------
 
-# test_size=0.2
-# 20% data used for testing
+# Import pandas library for dataframe handling
+import pandas as pd
 
-# random_state=0
-# ensures same random split every time
+# Convert training data into pandas DataFrame
+# for easier analysis and visualization
+df = pd.DataFrame(X_train)
 
-xtrain, xtest, ytrain, ytest = train_test_split(
-    x,
-    y,
-    test_size=0.2,
-    random_state=0
-)
+# Assign feature names to dataframe columns
+df.columns = [
+    'CRIM','ZN','INDUS','CHAS','NOX','RM','AGE',
+    'DIS','RAD','TAX','PTRATIO','B','LSTAT'
+]
 
+
+# Add house price column to dataframe
+df['PRICE'] = Y_train
+
+
+#Calculates correlation between every pair of columns
+#Checks how strongly features are related
+correlation = df.corr()
+
+#Extracts only correlations with house price
+#Shows which features affect price most
+correlation['PRICE']
 
 # ----------------------------------------------------------
-# STEP 7 : Create Linear Regression Model
+# STEP 8 : Heatmap display
 # ----------------------------------------------------------
 
-# Create Linear Regression object
+# Create figure with larger size for heatmap display
+fig,axes = plt.subplots(figsize=(15,12))
 
-regressor = LinearRegression()
 
+# Plot heatmap of correlation matrix
+# square=True makes cells square
+# annot=True displays correlation values inside cells
 
-# ----------------------------------------------------------
-# STEP 8 : Train Model
-# ----------------------------------------------------------
+sns.heatmap(correlation, square=True, annot=True)
 
-# fit() trains the model
+##Purpose of heatmap :-
 
-# Model learns relationship between:
-# input features and house prices
+#visually show correlation between features
+#identify strongly related features
+#understand how features affect house price
 
-regressor.fit(xtrain, ytrain)
-
+#What Does Heatmap Tell?
+#Dark/high values → strong correlation
+#Light/low values → weak correlation
+#Positive values → direct relationship
+#Negative values → inverse relationship
 
 # ----------------------------------------------------------
 # STEP 9 : Predict House Prices
 # ----------------------------------------------------------
 
-# predict() predicts prices using testing data
+# Create figure with width=20 and height=5
+plt.figure(figsize = (20,5))
 
-y_pred = regressor.predict(xtest)
+
+# Select features to compare with house prices
+features = ['LSTAT','RM','PTRATIO']
+
+
+# Loop through each feature
+for i, col in enumerate(features):
+
+    # Create subplot for each feature
+    plt.subplot(1, len(features), i+1)
+
+    # x-axis contains selected feature values
+    x = df[col]
+
+    # y-axis contains house prices
+    y = df.PRICE
+
+    # Plot scatter graph between feature and price
+    plt.scatter(x, y, marker='o')
+
+    # Set graph title
+    plt.title("Variation in House prices")
+
+    # Set x-axis label
+    plt.xlabel(col)
+
+    # Set y-axis label
+    plt.ylabel('"House prices in $1000"')
+
+    #These scatter plots are used to:
+    #visualize relationship between features and house prices
+    #observe trends/patterns in data
+
+# ----------------------------------------------------------
+# STEP 10 : Build Deep Neural Network Model
+# ----------------------------------------------------------
+
+# Create Sequential Neural Network model
+model = Sequential()
+
+
+# Add first hidden layer with:
+# 128 neurons
+# ReLU activation function
+# input_shape defines number of input features
+
+model.add(Dense(128,
+                activation='relu',
+                input_shape=X_train[0].shape))
+
+
+# Add second hidden layer with 64 neurons
+# Learns deeper patterns from data
+
+model.add(Dense(64,
+                activation='relu'))
+
+
+# Add third hidden layer with 32 neurons
+# Further refines learned features
+
+model.add(Dense(32,
+                activation='relu'))
+
+
+# Output layer with 1 neuron
+# Predicts single continuous value (house price)
+
+model.add(Dense(1))
+
+
+# Display model architecture summary
+# Shows layers, neurons, and parameters
+
+model.summary()
 
 
 # ----------------------------------------------------------
-# STEP 10 : Plot Graph
+# Compile Model
 # ----------------------------------------------------------
 
-# Scatter plot compares:
-# actual prices vs predicted prices
+# loss='mse'
+# Mean Squared Error used for regression
 
-plt.scatter(ytest,
-            y_pred,
-            c='green')
+# optimizer='rmsprop'
+# Optimizer updates weights to reduce loss
 
-# x-axis label
-plt.xlabel("Actual Price")
+# metrics=['mae']
+# Mean Absolute Error used for evaluation
 
-# y-axis label
-plt.ylabel("Predicted Price")
+model.compile(loss='mse',
+              optimizer='rmsprop',
+              metrics=['mae'])
 
-# graph title
-plt.title("Actual vs Predicted House Prices")
 
-# display graph
-plt.show()
+# ----------------------------------------------------------
+# Train Deep Neural Network
+# ----------------------------------------------------------
 
+# fit() trains the model
+
+# epochs=50
+# complete passes through training data
+
+# batch_size=1
+# one sample processed at a time
+
+# verbose=1
+# displays training progress
+
+# validation_data
+# evaluates performance on test data
+
+history = model.fit(X_train,
+                    Y_train,
+                    epochs=50,
+                    batch_size=1,
+                    verbose=1,
+                    validation_data=(X_test, Y_test))
+
+# What Actually Happens Here?
+
+# The neural network:
+
+# Takes house features as input
+# Passes data through hidden layers
+# Learns patterns affecting house prices
+# Predicts house price
+# Calculates error using MSE
+# Updates weights using RMSprop
+# Repeats for 50 epochs to improve accuracy
 
 # ----------------------------------------------------------
 # STEP 11 : Calculate Error
 # ----------------------------------------------------------
-
-# Mean Squared Error measures prediction error
-
-mse = mean_squared_error(ytest, y_pred)
-
-print("Mean Squared Error :", mse)
+# Predict house prices using test data
+y_pred = model.predict(X_test)
 
 
-# ----------------------------------------------------------
-# STEP 12 : Display Sample Predictions
-# ----------------------------------------------------------
+# Evaluate model performance on test data
+# Returns:
+# mse_nn -> Mean Squared Error
+# mae_nn -> Mean Absolute Error
 
-print("Actual Price :", ytest[0])
-
-print("Predicted Price :", y_pred[0])
+mse_nn, mae_nn = model.evaluate(X_test, Y_test)
 
 
-# ----------------------------------------------------------
-# Understanding What Model is Doing
-# ----------------------------------------------------------
+# Display Mean Squared Error
+# Lower value means better prediction accuracy
 
-# The model tries to:
-# 1. Learn relationship between input features and price
-# 2. Find best fit regression line
-# 3. Minimize prediction error
-# 4. Predict prices for unseen houses
+print('Mean squared error on test data: ', mse_nn)
 
-# Lower MSE means:
-# better prediction accuracy
+
+# Display Mean Absolute Error
+# Shows average prediction error
+
+print('Mean absolute error on test data: ', mae_nn)
+
+
+# Display predicted house prices
+y_pred
+
+# predict() → predicts house prices
+# evaluate() → checks model performance
+# mse_nn → squared prediction error
+# mae_nn → average prediction error
+# y_pred → predicted house prices array
