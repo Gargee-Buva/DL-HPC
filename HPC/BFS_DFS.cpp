@@ -1,3 +1,4 @@
+//OpenMP is an API for parallel programming in C/C++ and Fortran.
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -33,20 +34,30 @@ public:
 
         while (!q.empty()) {
             int node;
-
+//#pragma omp critical is used here to avoid race conditions while accessing and modifying the shared queue
             #pragma omp critical
             {
                 node = q.front();
                 q.pop();
                 cout << node << " ";
             }
-
+            /*Parallelizes neighbor processing. 
+            Instead of:
+            1. One thread checks neighbors one by one
+            2. Multiple threads check neighbors simultaneously.*/
             #pragma omp parallel for
             for (int i = 0; i < adj[node].size(); i++) {
                 int neighbor = adj[node][i];
 
                 if (!visited[neighbor]) {
-
+                    /*Only one thread can execute this block at a time.Needed because:
+                    Without critical:
+                    1.Two threads may simultaneously check visited[neighbor]
+                    2.Both may find it false
+                    3.Both may push same node into queue
+                    This causes:
+                    1. Queue is shared
+                    2. Multiple threads accessing queue causes race condition*/
                     #pragma omp critical
                     {
                         if (!visited[neighbor]) {

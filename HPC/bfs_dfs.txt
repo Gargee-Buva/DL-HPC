@@ -1,0 +1,89 @@
+1. OpenMP
+
+OpenMP is API for parallel programming in C/C++.
+
+Used for:
+
+Multithreading
+Shared memory parallelism
+
+Enable using:
+
+-fopenmp
+2. Parallel For
+#pragma omp parallel for
+
+Splits loop iterations among threads.
+
+Example:
+
+Thread 1 → i = 0,1
+Thread 2 → i = 2,3
+3. Critical Section
+#pragma omp critical
+
+Only one thread allowed at a time.
+
+Used for:
+
+Shared variables
+Queue operations
+Printing
+Time Complexity
+BFS
+
+O(V+E)
+
+DFS
+
+O(V+E)
+
+Where:
+
+V = vertices
+E = edges
+Difference Between BFS and DFS
+BFS	DFS
+Level-wise traversal	Depth-wise traversal
+Uses Queue	Uses Stack/Recursion
+Finds shortest path	Does not guarantee shortest path
+More memory	Less memory
+Better for shortest path	Better for deep exploration
+Important Viva Questions
+Why use visited array?
+
+To avoid revisiting nodes and infinite loops.
+
+Why queue in BFS?
+
+Because BFS follows FIFO traversal.
+
+Why recursion in DFS?
+
+Recursion behaves like stack and supports depth traversal.
+
+Why critical section needed?
+
+To avoid race conditions on shared resources.
+
+What is race condition?
+
+When multiple threads access shared data simultaneously causing incorrect results.
+
+What is advantage of parallel graph traversal?
+
+Faster traversal for large graphs using multiple threads.
+
+Important Practical Observation
+
+Traversal order in parallel BFS/DFS may vary.
+
+Example:
+
+0 1 2 3
+
+or
+
+0 2 1 3
+
+Both can be correct because thread scheduling is non-deterministic.
