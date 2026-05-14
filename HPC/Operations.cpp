@@ -39,3 +39,20 @@ int main() {
 
     return 0;
 }
+
+/*
+#pragma omp parallel for reduction(+:sum) reduction(min:minVal) reduction(max:maxVal)
+means:
+
+Run the loop using multiple threads in parallel, where:
+
+each thread calculates its own partial sum
+each thread finds its own local minimum
+each thread finds its own local maximum
+
+and at the end OpenMP automatically combines all thread results into:
+
+final sum
+final minimum
+final maximum
+*/
