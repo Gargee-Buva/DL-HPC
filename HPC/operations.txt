@@ -1,0 +1,386 @@
+Aim of Program
+
+Implement:
+
+1. Sum
+2. Minimum
+3. Maximum
+4. Average
+
+using:
+
+Parallel Reduction in OpenMP
+First Understand Reduction
+
+Reduction means:
+
+Combining results from multiple threads into one final result.
+
+Example:
+
+Sum of array
+Maximum value
+Minimum value
+Why Reduction Needed?
+
+In parallel programming:
+
+Multiple threads work simultaneously
+Shared variables can create race conditions
+
+Example:
+
+sum += arr[i];
+
+If multiple threads update sum together:
+
+Wrong output may occur
+Solution → Reduction
+
+OpenMP automatically:
+
+Creates private copy for each thread
+Performs local computation
+Combines all results at end
+
+Safe and efficient.
+
+Theory of Reduction :-
+
+Suppose array:
+
+1 2 3 4 5 6
+
+Threads:
+
+Thread 1 → 1+2+3 = 6
+Thread 2 → 4+5+6 = 15
+
+Final reduction:
+
+6 + 15 = 21
+
+Header Files :-
+#include <iostream>
+
+Input/output.
+
+#include <vector>
+
+Dynamic array.
+
+#include <climits>
+
+Provides:
+
+INT_MAX
+INT_MIN
+
+#include <omp.h>
+
+OpenMP library.
+
+Needed for:
+
+Parallel directives
+Timing
+Threads
+Array Input
+Input Size
+int n;
+cin >> n;
+Create Array
+vector<int> arr(n);
+
+Dynamic array of size n.
+
+Input Elements
+for (int i = 0; i < n; i++)
+
+Store elements.
+
+Initialize Variables
+int sum = 0;
+
+Stores total sum.
+
+int minVal = INT_MAX;
+
+Initialize minimum with largest possible integer.
+
+Why?
+
+Because any array element will be smaller.
+
+int maxVal = INT_MIN;
+
+Initialize maximum with smallest possible integer.
+
+Why?
+
+Because any array element will be larger.
+
+Main Parallel Reduction
+
+This is MOST IMPORTANT part.
+
+#pragma omp parallel for reduction(+:sum) reduction(min:minVal) reduction(max:maxVal)
+Meaning of Each Reduction
+1. Sum Reduction
+reduction(+:sum)
+
+Each thread:
+
+Maintains private sum
+Final sums added together
+2. Minimum Reduction
+reduction(min:minVal)
+
+Each thread:
+
+Finds local minimum
+OpenMP combines minimums
+3. Maximum Reduction
+reduction(max:maxVal)
+
+Each thread:
+
+Finds local maximum
+OpenMP combines maximums
+Parallel Loop Execution
+for (int i = 0; i < n; i++)
+
+Iterations distributed among threads.
+
+Example:
+
+Array = 1 2 3 4 5 6 7 8
+
+Possible division:
+
+Thread 1 → 1 2
+Thread 2 → 3 4
+Thread 3 → 5 6
+Thread 4 → 7 8
+Sum Logic
+sum += arr[i];
+
+Adds element to local thread sum.
+
+Minimum Logic
+if (arr[i] < minVal)
+
+Update minimum.
+
+Maximum Logic
+if (arr[i] > maxVal)
+
+Update maximum.
+
+Final Reduction
+
+After loop:
+
+OpenMP combines thread results automatically.
+
+Example:
+
+Thread mins → 3 1 5
+Global min → 1
+
+Average Calculation
+double avg = (double)sum / n;
+
+Formula:
+
+Average= Sum/n
+
+Typecasting needed for decimal result.
+
+Output Section
+
+Print:
+
+Sum
+Minimum
+Maximum
+Average
+
+Detailed Algorithm: Parallel Reduction
+
+Step 1
+
+Input number of elements n
+
+Step 2
+
+Create array of size n
+
+Step 3
+
+Input array elements
+
+Step 4
+
+Initialize:
+
+sum = 0
+minVal = INT_MAX
+maxVal = INT_MIN
+Step 5
+
+Start parallel loop using OpenMP reduction
+
+parallel for each array element
+Step 6
+
+For each element:
+
+Add to sum
+Compare for minimum
+Compare for maximum
+Step 7
+
+OpenMP combines all thread-local results automatically
+
+Step 8
+
+Calculate average
+
+Step 9
+
+Display:
+
+Sum
+Minimum
+Maximum
+Average
+Example Execution
+
+Input:
+
+1 5 3 8 2
+Thread Work
+Thread 1 → 1 5
+Local sum = 6
+Local min = 1
+Local max = 5
+
+Thread 2 → 3 8
+Local sum = 11
+Local min = 3
+Local max = 8
+
+Thread 3 → 2
+Local sum = 2
+Local min = 2
+Local max = 2
+Final Reduction
+Sum = 6+11+2 = 19
+Min = 1
+Max = 8
+Average = 19/5 = 3.8
+Important OpenMP Concepts
+1. Shared Memory Model
+
+All threads share:
+
+Array
+Final variables
+2. Parallel For
+#pragma omp parallel for
+
+Distributes iterations among threads.
+
+3. Reduction Clause
+reduction(operation:variable)
+
+Performs safe parallel accumulation.
+
+Why Reduction Better Than Critical?
+
+Without reduction:
+
+#pragma omp critical
+sum += arr[i];
+
+This becomes slow because:
+
+Threads wait frequently
+
+Reduction is optimized and faster.
+
+Time Complexity
+
+Sequential:
+
+O(n)
+
+Parallel:
+
+Approximately:
+
+O(n/p)
+
+Where:
+
+n = elements
+p = processors/threads
+
+Real Life Applications :-
+
+Operation	Application
+
+Sum	        Financial analytics
+Minimum	    Lowest temperature
+Maximum	    Highest sales
+Average	    Sensor data analysis
+Example     Real Scenario
+Weather     Data Processing
+
+Millions of temperature readings:
+
+Parallel threads:
+
+Thread 1 → City group A
+Thread 2 → City group B
+Thread 3 → City group C
+
+Reduction computes:
+
+Global max temperature
+Global min temperature
+Average temperature
+
+Very fast.
+
+Important Viva Questions
+What is reduction?
+
+Combining thread-local results into one final result.
+
+Why reduction used?
+
+To avoid race conditions during parallel accumulation.
+
+What is race condition?
+
+Multiple threads updating same variable simultaneously causing incorrect output.
+
+Why use INT_MAX for minimum?
+
+Ensures first element becomes minimum initially.
+
+Why use INT_MIN for maximum?
+
+Ensures first element becomes maximum initially.
+
+Difference between critical and reduction?
+Critical	            Reduction
+Slower	                Faster
+One thread at a time	Thread-local computation
+More synchronization	Optimized accumulation
+
+Most Important Viva Line :-
+
+Reduction is an OpenMP technique used to safely and efficiently combine results from multiple parallel threads into a single final result.
