@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 !g++ --version
 %%writefile file_name.cpp
 
@@ -23,3 +24,30 @@
    After compilation:
    i. Human-readable C++ code becomes machine code
    ii. Executable file contains runnable binary instructions
+=======
+!g++ --version
+%%writefile file_name.cpp
+
+// code
+
+!g++ file_name.cpp -fopenmp -o output
+!./output
+
+
+| Part            | Meaning                                     |
+| --------------- | ------------------------------------------- |
+| g++             | C++ compiler                                |
+| file_name.cpp   | Source code file                            |
+| -fopenmp        | Enables OpenMP parallel programming support |
+| -o output       | Creates executable file named `output`      |
+
+1. What does ./output mean?
+
+   Runs executable file named output from current directory.
+
+2. What is an Executable File?
+
+   After compilation:
+   i. Human-readable C++ code becomes machine code
+   ii. Executable file contains runnable binary instructions
+>>>>>>> c1e685b2ede60d5060dd27556d33365eb30d3ec1
