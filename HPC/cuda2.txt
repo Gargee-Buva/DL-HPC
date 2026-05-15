@@ -1,0 +1,403 @@
+What is CUDA?
+
+CUDA (Compute Unified Device Architecture) is NVIDIA’s platform for GPU parallel programming.
+
+It allows:
+
+GPU to solve computational problems using thousands of threads simultaneously
+What is Matrix Multiplication?
+
+If:
+
+Matrix A:
+
+1 2
+3 4
+
+Matrix B:
+
+5 6
+7 8
+
+Then:
+
+Matrix C = A × B
+
+Formula:
+
+C[i][j]=∑k=0 to n−1 A[i][k]×B[k][j]
+
+Example Calculation
+C[0][0] = (1×5) + (2×7)
+        = 5 + 14
+        = 19
+Why GPU Good for Matrix Multiplication?
+
+Each matrix element calculation is independent.
+
+Example:
+
+Thread 1 → compute C[0][0]
+Thread 2 → compute C[0][1]
+Thread 3 → compute C[1][0]
+
+All simultaneously.
+
+Very efficient for GPUs.
+
+CUDA Execution Model
+Grid
+ ├── Blocks
+ │      ├── Threads
+
+Each thread computes one matrix element.
+
+Now Full Code Explanation with Comments
+#Cuda Program : Matrix Multiplication using CUDA C
+
+Program performs matrix multiplication on GPU.
+
+%%writefile cuda2.cu
+
+Creates CUDA source file.
+
+.cu extension used for CUDA programs.
+
+#include <iostream>
+
+For input and output.
+
+#include <cuda_runtime.h>
+
+CUDA runtime library.
+
+Provides:
+
+CUDA APIs
+GPU memory functions
+Kernel execution support
+using namespace std;
+
+Avoid writing std::.
+
+CUDA Kernel
+// CUDA Kernel for Matrix Multiplication
+__global__ void matrixMultiply(...)
+Meaning of __global__
+
+Means:
+
+Function runs on GPU
+and called from CPU
+
+This GPU function is called:
+
+Kernel
+Kernel Parameters
+int *A, *B, *C
+
+Pointers to matrices.
+
+rowsA, colsA, colsB
+
+Matrix dimensions.
+
+Thread Row Calculation
+int row = blockIdx.y * blockDim.y + threadIdx.y;
+
+Calculates matrix row handled by current thread.
+
+Thread Column Calculation
+int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+Calculates matrix column handled by current thread.
+
+Why x and y?
+
+Matrix is 2D:
+
+rows
+columns
+
+CUDA uses:
+
+x-direction
+y-direction
+
+for 2D parallelism.
+
+Formula
+
+row=blockIdx.y×blockDim.y+threadIdx.y
+
+col=blockIdx.x×blockDim.x+threadIdx.x
+
+Boundary Check
+if(row < rowsA && col < colsB)
+
+Prevents invalid memory access.
+
+Important because:
+
+Extra threads may exist.
+Sum Variable
+int sum = 0;
+
+Stores result of one matrix element.
+
+Matrix Multiplication Loop
+for(int k = 0; k < colsA; k++)
+
+Computes dot product.
+
+Main Multiplication Logic
+sum += A[row * colsA + k] * B[k * colsB + col];
+
+MOST IMPORTANT MATRIX FORMULA.
+
+Understanding 1D Indexing
+
+Matrices stored in linear memory.
+
+Formula:
+
+row * number_of_columns + column
+Example
+
+2×2 matrix:
+
+1 2
+3 4
+
+Stored as:
+
+1 2 3 4
+Store Result
+C[row * colsB + col] = sum;
+
+Stores computed matrix element.
+
+Main Function
+int main()
+Program execution starts.
+
+Matrix Dimensions Input
+cin >> rowsA >> colsA;
+
+Input size of Matrix A.
+
+cin >> rowsB >> colsB;
+
+Input size of Matrix B.
+
+Matrix Multiplication Condition
+if(colsA != rowsB)
+
+Condition for valid multiplication.
+
+Why?
+
+Matrix multiplication possible only if:
+
+Columns of A = Rows of B
+
+Example
+
+Valid:
+
+2×3  ×  3×4
+
+Invalid:
+
+2×3 × 2×2
+
+Host Matrices
+int *h_A
+
+h_ means:
+
+Host memory (CPU RAM)
+
+Create CPU Arrays
+h_A
+h_B
+h_C
+
+For:
+
+Matrix A
+Matrix B
+Result matrix
+
+Input Matrix Elements
+cin >> h_A[i * colsA + j];
+
+Stores matrix elements using 1D indexing.
+
+Device Pointers
+int *d_A, *d_B, *d_C;
+
+d_ means:
+
+Device memory (GPU memory)
+Memory Sizes
+int sizeA = rowsA * colsA * sizeof(int);
+
+Calculate bytes needed.
+
+GPU Memory Allocation
+cudaMalloc((void**)&d_A, sizeA);
+
+Allocates GPU memory.
+
+Why Needed?
+
+CPU memory and GPU memory are separate.
+
+Need dedicated GPU memory.
+
+Copy CPU → GPU
+cudaMemcpy(d_A, h_A, sizeA, cudaMemcpyHostToDevice);
+
+Copies matrix from:
+
+CPU → GPU
+Block Size
+
+(Your notebook truncated after this, but standard continuation is:)
+
+dim3 threadsPerBlock(16,16);
+
+Defines:
+
+16×16 = 256 threads per block
+Grid Size
+
+Usually:
+
+dim3 blocksPerGrid((colsB+15)/16, (rowsA+15)/16);
+
+Calculates required blocks.
+
+Why 2D Blocks?
+
+Matrix is 2D:
+
+rows
+columns
+
+So CUDA uses:
+
+2D thread organization
+Kernel Launch
+
+Usually:
+
+matrixMultiply<<<blocksPerGrid, threadsPerBlock>>>(...)
+
+Launches thousands of GPU threads.
+
+Parallel Execution
+
+Example:
+
+Thread (0,0) → compute C[0][0]
+Thread (0,1) → compute C[0][1]
+Thread (1,0) → compute C[1][0]
+
+All simultaneously.
+
+Copy GPU → CPU
+cudaMemcpy(h_C, d_C, sizeC, cudaMemcpyDeviceToHost);
+
+Copies result:
+
+GPU → CPU
+Free GPU Memory
+cudaFree(d_A);
+
+Releases GPU memory.
+
+Avoids memory leaks.
+
+Free CPU Memory
+
+delete[] h_A;
+
+Releases CPU RAM.
+
+Example Execution
+
+Matrix A:
+
+1 2
+3 4
+
+Matrix B:
+
+5 6
+7 8
+
+GPU Threads:
+
+Thread 1 → compute C[0][0]
+Thread 2 → compute C[0][1]
+Thread 3 → compute C[1][0]
+Thread 4 → compute C[1][1]
+
+Output:
+
+19 22
+43 50
+
+Advantages of CUDA Matrix Multiplication
+CPU	                    GPU
+Sequential	            Massive parallelism
+Slower for              large matrices	Very fast
+Few cores	            Thousands of cores
+
+Real Life Applications
+Application	            Use
+Deep Learning	        Neural networks
+Image Processing	    Filters
+Scientific Computing	Simulations
+Computer Vision	        Matrix operations
+AI	                    Tensor computations
+
+Important Viva Questions
+What is CUDA?
+
+NVIDIA platform for GPU parallel programming.
+
+What is a kernel?
+
+GPU function executed by many threads.
+
+Why matrix multiplication suitable for GPU?
+
+Each output element can be computed independently.
+
+Why use 2D threads?
+
+Matrices are two-dimensional.
+
+What is blockIdx.x?
+
+Current block number in x-direction.
+
+What is threadIdx.x?
+
+Thread number inside block.
+
+Why boundary check needed?
+if(row < rowsA && col < colsB)
+
+Prevents invalid memory access.
+
+Why cudaMemcpy needed?
+
+CPU and GPU have separate memory spaces.
+
+Most Important Viva Line
+
+CUDA matrix multiplication achieves massive parallelism by assigning one GPU thread to compute each matrix element independently.
