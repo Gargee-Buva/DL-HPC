@@ -22,12 +22,17 @@ void sequentialBubbleSort(vector<int>& arr) {
 // Parallel Bubble Sort (Odd-Even Sort)
 void parallelBubbleSort(vector<int>& arr) {
     int n = arr.size();
+    /*If current pass number is even:
+        perform EVEN phase comparisons
+        Else:
+        perform ODD phase comparisons
+    */
 
     for(int i = 0; i < n; i++) {
 
         // Even phase
         if(i % 2 == 0) {
-
+//OpenMP distributes pair comparisons among threads.
             #pragma omp parallel for
             for(int j = 0; j < n - 1; j += 2) {
                 if(arr[j] > arr[j + 1]) {

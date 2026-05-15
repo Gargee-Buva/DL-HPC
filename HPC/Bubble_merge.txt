@@ -1,0 +1,451 @@
+| Bubble Sort             | Merge Sort           |
+| ----------------------- | -------------------- |
+| Swaps adjacent elements | Divides and merges   |
+| Simple but slow         | Faster and efficient |
+| O(n²)                   | O(n log n)           |
+
+
+Aim of Program
+
+Implement:
+
+Sequential Bubble Sort
+Parallel Bubble Sort
+Sequential Merge Sort
+Parallel Merge Sort
+
+using:
+
+OpenMP
+
+and compare their execution times.
+
+Core Concept
+
+This practical demonstrates:
+
+Sequential execution
+Parallel execution
+Performance comparison
+Why Parallel Algorithms?
+
+Sequential programs:
+
+One CPU core executes everything
+
+Parallel programs:
+
+Multiple CPU cores work simultaneously
+
+Goal:
+
+Reduce execution time
+Improve performance for large datasets
+Header Files
+#include <iostream>
+
+Input/output.
+
+#include <vector>
+
+Dynamic arrays.
+
+#include <omp.h>
+
+OpenMP library.
+
+Provides:
+
+Parallel directives
+Timing functions
+Thread support
+Bubble Sort Theory
+
+Bubble sort repeatedly:
+
+Compares adjacent elements
+Swaps if wrong order
+
+Largest element moves to end after each pass.
+
+Sequential Bubble Sort
+Function
+void sequentialBubbleSort(vector<int>& arr)
+Outer Loop
+for(int i = 0; i < n - 1; i++)
+
+Controls number of passes.
+
+Need:
+n−1
+
+passes in worst case.
+
+Inner Loop
+for(int j = 0; j < n - i - 1; j++)
+
+Compares adjacent elements.
+
+Swap Condition
+if(arr[j] > arr[j + 1])
+
+If left element bigger:
+
+swap elements
+Example
+
+Array:
+
+5 1 4 2
+
+Pass 1:
+
+5↔1 → 1 5 4 2
+5↔4 → 1 4 5 2
+5↔2 → 1 4 2 5
+
+Largest element fixed.
+
+Bubble Sort Complexity
+
+O(n
+2
+)
+
+Because of nested loops.
+
+Parallel Bubble Sort Theory
+
+Normal bubble sort is hard to parallelize because:
+
+Comparisons depend on neighboring swaps.
+
+Solution:
+
+Odd-Even Transposition Sort
+Odd-Even Sort Idea
+
+Two phases:
+
+Even phase
+Odd phase
+Even Phase
+
+Compare:
+
+(0,1), (2,3), (4,5)
+
+Independent comparisons.
+
+Can run simultaneously.
+
+Odd Phase
+
+Compare:
+
+(1,2), (3,4), (5,6)
+
+Again independent.
+
+Parallel Bubble Sort Function
+void parallelBubbleSort(vector<int>& arr)
+Outer Loop
+for(int i = 0; i < n; i++)
+
+Runs phases repeatedly.
+
+Even Phase
+if(i % 2 == 0)
+Parallel Loop
+#pragma omp parallel for
+
+Distributes comparisons among threads.
+
+Even Index Comparisons
+for(int j = 0; j < n - 1; j += 2)
+
+Example:
+
+(0,1)
+(2,3)
+(4,5)
+Odd Phase
+for(int j = 1; j < n - 1; j += 2)
+
+Example:
+
+(1,2)
+(3,4)
+Why Parallel Bubble Sort Works
+
+Each pair comparison independent during phase.
+
+Threads can safely work simultaneously.
+
+Merge Sort Theory
+
+Merge sort uses:
+
+Divide and Conquer
+
+Steps:
+
+Divide array into halves
+Sort halves recursively
+Merge sorted halves
+Merge Sort Visualization
+
+Array:
+
+8 3 7 2
+
+Divide:
+
+8 3 | 7 2
+
+Further:
+
+8 | 3
+7 | 2
+
+Merge back:
+
+3 8
+2 7
+
+Final merge:
+
+2 3 7 8
+Merge Function
+Function
+void merge(vector<int>& arr, int low, int mid, int high)
+
+Combines two sorted halves.
+
+Temporary Array
+vector<int> temp;
+
+Stores merged result.
+
+Two Pointers
+i = low
+j = mid+1
+
+Used to traverse left and right halves.
+
+Compare Elements
+if(arr[i] <= arr[j])
+
+Take smaller element first.
+
+Copy Remaining Elements
+
+After one half finishes:
+
+Copy remaining elements.
+Final Copy Back
+arr[k] = temp[k-low];
+
+Stores merged sorted array.
+
+Sequential Merge Sort
+Recursive Division
+sequentialMergeSort(arr, low, mid);
+
+Left half.
+
+sequentialMergeSort(arr, mid + 1, high);
+
+Right half.
+
+Merge Sorted Halves
+merge(arr, low, mid, high);
+Merge Sort Complexity
+
+O(nlogn)
+
+Much faster than bubble sort for large data.
+
+Parallel Merge Sort Theory
+
+Merge sort is naturally parallelizable because:
+
+Left half independent
+Right half independent
+Parallel Merge Sort Function
+void parallelMergeSort(...)
+Parallel Sections
+#pragma omp parallel sections
+
+Creates parallel tasks.
+
+Section 1
+#pragma omp section
+
+Sort left half.
+
+Section 2
+#pragma omp section
+
+Sort right half.
+
+Parallel Execution
+
+Example:
+
+Thread 1 → sort left half
+Thread 2 → sort right half
+
+Simultaneously.
+
+Final Merge
+merge(...)
+
+Combines sorted halves.
+
+Why Merge Sort Better for Parallelism
+
+Large independent subproblems exist.
+
+Very suitable for multicore systems.
+
+Utility Function
+printArray()
+
+Prints sorted arrays.
+
+Main Function Flow
+Step 1: Input Array
+cin >> n;
+Step 2: Create Copies
+arr1 arr2 arr3 arr4
+
+Why?
+
+To test:
+
+Sequential bubble
+Parallel bubble
+Sequential merge
+Parallel merge
+
+on same original data.
+
+Step 3: Measure Time
+Timing Function
+omp_get_wtime()
+
+Returns wall-clock execution time.
+
+Time Formula
+
+Time=End−Start
+
+Performance Comparison
+
+Program compares:
+
+Sequential vs parallel
+Bubble vs merge
+Expected Observation
+
+For small arrays:
+
+Parallel may be slower
+
+Because:
+
+Thread creation overhead
+
+For large arrays:
+
+Parallel merge sort becomes faster
+Important OpenMP Concepts
+1. Shared Memory Parallelism
+
+All threads share:
+
+Array
+Memory space
+2. Parallel For
+#pragma omp parallel for
+
+Splits loop iterations among threads.
+
+3. Parallel Sections
+#pragma omp parallel sections
+
+Runs different code blocks simultaneously.
+
+4. Thread Overhead
+
+Creating/managing threads costs time.
+
+Small inputs:
+
+overhead > benefit
+
+Large inputs:
+
+parallelism beneficial
+Real Life Applications
+Bubble Sort
+
+Rarely used practically.
+Mostly educational.
+
+Merge Sort
+
+Widely used in:
+
+Database systems
+External sorting
+Big data processing
+Distributed systems
+Example Real Scenario
+Large E-Commerce Website
+
+Millions of products need sorting by:
+
+Price
+Rating
+Popularity
+
+Parallel merge sort:
+
+Server 1 → sort first half
+Server 2 → sort second half
+
+Then merge results.
+
+Very fast.
+
+Important Viva Questions
+Why merge sort better than bubble sort?
+
+Because:
+
+Better complexity
+Efficient for large data
+Naturally parallelizable
+Why bubble sort difficult to parallelize?
+
+Because adjacent swaps create dependencies.
+
+What is odd-even transposition sort?
+
+Parallel variation of bubble sort using:
+
+Even phase
+Odd phase
+What is divide and conquer?
+
+Problem divided into smaller subproblems solved recursively.
+
+Why use omp_get_wtime()?
+
+To measure execution time.
+
+Why parallel algorithm slower for small inputs?
+
+Thread overhead dominates computation time.

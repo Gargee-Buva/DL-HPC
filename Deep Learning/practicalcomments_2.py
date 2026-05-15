@@ -38,11 +38,13 @@ from tensorflow.keras.optimizers import Adam
 # ----------------------------------------------------------
 
 # Dataset URL from UCI repository
+# This dataset is used for alphabet letter recognition using Machine Learning / Deep Learning.
+
 url = "https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/letter-recognition.data"
 
 # Create column names:
-# 1 target column -> "letter"
-# 16 feature columns -> feat_0 to feat_15
+# 1 target column -> "letter" {Target output (A–Z)}
+# 16 feature columns -> feat_0 to feat_15 (Numerical properties of the letter image)
 
 col_names = ["letter"] + [f"feat_{i}" for i in range(16)]
 
